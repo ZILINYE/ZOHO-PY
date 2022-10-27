@@ -7,19 +7,28 @@ import json
 from maria import Maria
 from tqdm import tqdm
 from queue import Queue
-
+import math
 exitFlag=0
 studentInfo = Maria()
-token = "1000.7549631639bff8a3639c3431d917dd61.7e9e2a0d8cb66add3cebc14d50b4ef74"
+token = "1000.bdbadda9801c4982848697b2882fac93.dc0dc9e96b0c55b50029125838d86c8d"
 url = "https://sign.zoho.com/api/v1/requests"
 headers = {
         "Authorization": "Zoho-oauthtoken "+ token
     }
+row_count = 10
 
+def HttpRequest(start_index):
+    params = {
+        "data" : '{"page_context": {"row_count":'+str(row_count)+' , "start_index": '+str(start_index)+', "search_columns": {"request_name": "22F"}, "sort_column": "created_time", "sort_order": "DESC"}}'
+    }
+    r = requests.get(url, headers=headers, params=params).json()
+    return r
+
+qsize = HttpRequest(1)['page_context']['total_count']
 queueLock = threading.Lock()
+DownloadList = Queue(qsize)
+thread_number = 2
 
-DownloadList = Queue(1200)
-threads=[]
 class myThread (threading.Thread):
     def __init__(self,threadID,q):
         threading.Thread.__init__(self)
@@ -34,19 +43,15 @@ class myThread (threading.Thread):
         
 
 
-    
-    
+
+
     
     
 # grab document list from the API that mathch the search 
 def getDocumentList(start_index) -> list:
-    params = {
-        "data" : '{"page_context": {"row_count": 10, "start_index": '+str(start_index)+', "search_columns": {"request_name": "22F"}, "sort_column": "created_time", "sort_order": "DESC"}}'
-    }
-    r = requests.get(url, headers=headers, params=params).json()
 
     outputlist = []
-    documentlist = r['requests']
+    documentlist = HttpRequest(start_index)['requests']
     for item in documentlist:
         if item['request_status'] == 'completed':
             
@@ -98,30 +103,34 @@ def getDownloadPDF(q):
             progress_bar.close()
         
 
-thread_number = 2
-thread_index = 1
-start_index = 1
 
-while thread_index <= thread_number:
-    thread = myThread(thread_index,DownloadList)
-    thread.start()
-    threads.append(thread)
-    thread_index +=1
+def main():
+
+    threads=[]
+
+    thread_index = 1
+    start_index = 1
+
+    while thread_index <= thread_number:
+        thread = myThread(thread_index,DownloadList)
+        thread.start()
+        threads.append(thread)
+        thread_index +=1
+    i = 1
+    while i <= thread_number:
+        
+        pageList = getDocumentList(start_index)
+        for item in pageList:
+            DownloadList.put(item)
+        start_index += 10
+        i+=1
+
+    while not DownloadList.empty():
+        pass
+    exitFlag = 1 
+    for t in threads:
+        t.join()
+    print("exit the thread!!")
 
 
-
-i = 1
-while i <= thread_number:
-    
-    pageList = getDocumentList(start_index)
-    for item in pageList:
-        DownloadList.put(item)
-    start_index += 10
-    i+=1
-# DownloadList.get()
-while not DownloadList.empty():
-    pass
-
-for t in threads:
-    t.join()
-print("exit the thread!!")
+main()

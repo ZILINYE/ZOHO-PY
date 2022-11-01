@@ -1,7 +1,5 @@
 from email import header
 import threading
-from wsgiref.util import request_uri
-from black import parse_ast
 import requests
 import json
 from maria import Maria
@@ -10,10 +8,10 @@ from queue import Queue
 import math
 exitFlag=0
 studentInfo = Maria()
-token = "1000.bdbadda9801c4982848697b2882fac93.dc0dc9e96b0c55b50029125838d86c8d"
+token = "1000.468a50275f341b0866c18fd8afa2f78e.951c90bb336cab21dae178dc7ec7858d"
 url = "https://sign.zoho.com/api/v1/requests"
 headers = {
-        "Authorization": "Zoho-oauthtoken "+ token
+        "Authorization": "Zoho-oauthtoken "+ token,
     }
 row_count = 10
 
@@ -27,7 +25,7 @@ def HttpRequest(start_index):
 qsize = HttpRequest(1)['page_context']['total_count']
 queueLock = threading.Lock()
 DownloadList = Queue(qsize)
-thread_number = 2
+thread_number = 10
 
 class myThread (threading.Thread):
     def __init__(self,threadID,q):
@@ -96,7 +94,7 @@ def getDownloadPDF(q):
             block_size = 1024 #1 Kibibyte
             progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
             with open(fileprefix+student_id+'.zip',"wb") as f:
-                for chunk in r.iter_content(chunk_size=512):
+                for chunk in r.iter_content(chunk_size=10240):
                     if chunk:  # filter out keep-alive new chunks
                         progress_bar.update(len(chunk))
                         f.write(chunk)

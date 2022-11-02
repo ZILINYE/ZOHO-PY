@@ -8,9 +8,11 @@ import math
 import zipfile
 import os
 from PyPDF2 import PdfMerger
+import shutil
+import pandas as pd 
 exitFlag = 0
 studentInfo = Maria()
-token = "1000.cdee825c8296f65377fed992fbe24a33.3c5e94cc1af893539abc58d3e44082cb"
+token = "1000.9a3eea6eb635f9d6527634fc1840d865.21dc2b58d5eb552e2ae5def2b4e7bae0"
 url = "https://sign.zoho.com/api/v1/requests"
 headers = {
     "Authorization": "Zoho-oauthtoken " + token,
@@ -20,7 +22,7 @@ row_count = 10
 
 def HttpRequest(start_index):
     params = {
-        "data": '{"page_context": {"row_count":'+str(row_count)+' , "start_index": '+str(start_index)+', "search_columns": {"request_name": "22F"}, "sort_column": "created_time", "sort_order": "DESC"}}'
+        "data": '{"page_context": {"row_count":'+str(row_count)+' , "start_index": '+str(start_index)+', "search_columns": {"request_name": "S22"}, "sort_column": "created_time", "sort_order": "DESC"}}'
     }
     r = requests.get(url, headers=headers, params=params).json()
     return r
@@ -30,7 +32,7 @@ qsize = HttpRequest(1)['page_context']['total_count']
 queueLock = threading.Lock()
 DownloadList = Queue(qsize)
 ExtractList = Queue(qsize)
-thread_number = 2
+thread_number = 2  # Page number 
 
 
 class myThread (threading.Thread):
@@ -56,26 +58,28 @@ def getDocumentList(start_index) -> list:
 
             campemail = item['actions'][0]['recipient_email']
 
-            fileprefix = item['document_ids'][0]['document_name'][:9]
-
+            # fileprefix = item['document_ids'][0]['document_name'][:9]
+            term = "Spring"
+            year = 2022
+            
             request_id = item['request_id']
 
-            studentID = getStudentInfo(campemail=campemail)
+            studentID,program = getStudentInfo(year,term,campemail)
             if studentID:
-
+                fileprefix = str(year) + "-" + term + "-"+program+"-"
                 outputlist.append([fileprefix, request_id, studentID])
             else:
-                print('%s email not found in Database' % campemail)
+                f = open("misslist.txt", "a")
+                f.write('%s email not found in Database' % campemail)
+                f.close()
 
-    # print(len(outputlist))
-    # print(outputlist)
     return outputlist
 
 
 # Get student information from database
-def getStudentInfo(campemail) -> str:
-    studentID = studentInfo.GetStudentInfo(campemail=campemail)
-    return studentID
+def getStudentInfo(year,term,campemail):
+    studentID,program = studentInfo.GetStudentInfo(year,term,campemail)
+    return studentID,program
 
 # Download zip file
 
@@ -123,7 +127,7 @@ def getDownloadPDF(q):
 def pdfProcess(q):
 
     if not ExtractList.empty():
-        queueLock.acquire()
+        # queueLock.acquire()
         filename = q.get()
         
         with zipfile.ZipFile(filename+'.zip', 'r') as zip_ref:
@@ -133,8 +137,10 @@ def pdfProcess(q):
             merger.append(filename+"\\"+item)
         merger.write(filename+".pdf")
         merger.close()
+        #  Delete old zip file and folder
         os.remove(filename+'.zip')
-        queueLock.release()
+        shutil.rmtree(filename)
+        # queueLock.release()
 
 
 def main():
@@ -150,6 +156,9 @@ def main():
     while i <= thread_number:
 
         pageList = getDocumentList(start_index)
+        # df = pd.DataFrame(pageList)
+        # df.to_csv('test.csv',mode='a',index=False,header=False)
+        # print(df)
         for item in pageList:
             dlist.append(item)
         start_index += 10
@@ -159,11 +168,11 @@ def main():
 
     while not ExtractList.empty():
         pdfProcess(ExtractList)
-    # while thread_index <= thread_number:
-    #     thread = myThread(thread_index, ExtractList)
-    #     thread.start()
-    #     threads.append(thread)
-    #     thread_index += 1
+    while thread_index <= thread_number:
+        thread = myThread(thread_index, ExtractList)
+        thread.start()
+        threads.append(thread)
+        thread_index += 1
 
 
     # exitFlag = 1

@@ -26,17 +26,15 @@ class Maria:
     def GetStudentInfo(self,year,term,campemail):
         sql = "SELECT * FROM Student WHERE CampEmail='%s' LIMIT 1" % campemail
         stu = pd.read_sql(sql,self.cursor)
-        print(stu.iloc[0]['ID'])
+
         if stu.empty:
             return None,None
         else:
             studentId = stu.iloc[0]['ID']
             sql = "SELECT * FROM Enrollment WHERE StudentID='%s' AND TermYear = '%s' AND Term = '%s'" % (studentId,str(year),term)
-            print(sql)
             pro = pd.read_sql(sql,self.cursor)
             Program = "Unknown"
             if not pro.empty:
                 Program = pro.iloc[0]['Program_code']
-                # print(Program)
                 
             return studentId,Program

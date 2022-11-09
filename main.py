@@ -10,9 +10,20 @@ import os
 from PyPDF2 import PdfMerger
 import shutil
 import pandas as pd 
+
+
+def GetAccessToken():
+    r = requests.post(url="https://accounts.zoho.com/oauth/v2/token?refresh_token=1000.23be290456580cd7378b94f2eb3d2334.8ed115d741371a6cf5ada13b2903819e&client_id=1000.6C4D4C3LQS1XV9BVF70PS55G3PELTK&client_secret=211e6b7d3395fd9e8f7d67df464a884e0f573c6079&redirect_uri=https%3A%2F%2Fsign.zoho.com&grant_type=refresh_token")
+    access_token = r.json()['access_token']
+    return access_token
+
+
 exitFlag = 0
 studentInfo = Maria()
-token = "1000.9a3eea6eb635f9d6527634fc1840d865.21dc2b58d5eb552e2ae5def2b4e7bae0"
+term = "Fall"
+year = 2020
+search_key = "2020 Fall"
+token = GetAccessToken()
 url = "https://sign.zoho.com/api/v1/requests"
 headers = {
     "Authorization": "Zoho-oauthtoken " + token,
@@ -20,9 +31,10 @@ headers = {
 row_count = 10
 
 
+
 def HttpRequest(start_index):
     params = {
-        "data": '{"page_context": {"row_count":'+str(row_count)+' , "start_index": '+str(start_index)+', "search_columns": {"request_name": "S22"}, "sort_column": "created_time", "sort_order": "DESC"}}'
+        "data": '{"page_context": {"row_count":'+str(row_count)+' , "start_index": '+str(start_index)+', "search_columns": {"request_name": '+ search_key +'}, "sort_column": "created_time", "sort_order": "DESC"}}'
     }
     r = requests.get(url, headers=headers, params=params).json()
     return r
@@ -32,9 +44,8 @@ qsize = HttpRequest(1)['page_context']['total_count']
 queueLock = threading.Lock()
 DownloadList = Queue(qsize)
 ExtractList = Queue(qsize)
-thread_number = 2  # Page number 
-
-
+thread_number = math.ceil(qsize/row_count)  # Page number 
+# thread_number = 2
 class myThread (threading.Thread):
     def __init__(self, threadID, q):
         threading.Thread.__init__(self)
@@ -59,8 +70,8 @@ def getDocumentList(start_index) -> list:
             campemail = item['actions'][0]['recipient_email']
 
             # fileprefix = item['document_ids'][0]['document_name'][:9]
-            term = "Spring"
-            year = 2022
+            # term = "Spring"
+            # year = 2022
             
             request_id = item['request_id']
 
@@ -68,9 +79,12 @@ def getDocumentList(start_index) -> list:
             if studentID:
                 fileprefix = str(year) + "-" + term + "-"+program+"-"
                 outputlist.append([fileprefix, request_id, studentID])
+                downloadList = open("DownloadList.txt", "a")
+                downloadList.write(fileprefix+' '+str(request_id)+' '+studentID+'\n')
+                downloadList.close()
             else:
                 f = open("misslist.txt", "a")
-                f.write('%s email not found in Database' % campemail)
+                f.write(campemail+'\n')
                 f.close()
 
     return outputlist
@@ -85,31 +99,11 @@ def getStudentInfo(year,term,campemail):
 
 
 def getDownloadPDF(q):
-    # while not exitFlag:
-
-    #     if not DownloadList.empty():
-    #         queueLock.acquire()
-    #         data = q.get()
-    #         queueLock.release()
-    #         fileprefix=data[0]
-    #         request_id = data[1]
-    #         student_id = data[2]
-    #         # print(data)
-    #         r = requests.get(url+"/"+request_id+"/pdf",headers=headers,stream=False)
-    #         total_size_in_bytes= int(r.headers.get('content-length', 0))
-    #         block_size = 1024 #1 Kibibyte
-    #         progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
-    #         with open(fileprefix+student_id+'.zip',"wb") as f:
-    #             for chunk in r.iter_content(chunk_size=10240):
-    #                 if chunk:  # filter out keep-alive new chunks
-    #                     progress_bar.update(len(chunk))
-    #                     f.write(chunk)
-    #         progress_bar.close()
 
     fileprefix = q[0]
     request_id = q[1]
     student_id = q[2]
-    # print(data)
+
     r = requests.get(url+"/"+request_id+"/pdf", headers=headers, stream=False)
     total_size_in_bytes = int(r.headers.get('content-length', 0))
 
@@ -163,16 +157,16 @@ def main():
             dlist.append(item)
         start_index += 10
         i += 1
-    for item in dlist:
-        getDownloadPDF(item)
+    # for item in dlist:
+    #     getDownloadPDF(item)
 
-    while not ExtractList.empty():
-        pdfProcess(ExtractList)
-    while thread_index <= thread_number:
-        thread = myThread(thread_index, ExtractList)
-        thread.start()
-        threads.append(thread)
-        thread_index += 1
+    # while not ExtractList.empty():
+    #     pdfProcess(ExtractList)
+    # while thread_index <= thread_number:
+    #     thread = myThread(thread_index, ExtractList)
+    #     thread.start()
+    #     threads.append(thread)
+    #     thread_index += 1
 
 
     # exitFlag = 1

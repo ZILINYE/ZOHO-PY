@@ -1,3 +1,7 @@
-import os 
-import shutil
-shutil.rmtree("test")
+
+
+
+tt = "test.zip"
+
+hh=tt.split(".")[0]
+print(hh) 

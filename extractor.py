@@ -3,7 +3,7 @@ import zipfile
 from PyPDF2 import PdfMerger
 import shutil
 
-folder = "2020 Fall"
+folder = "2020 Winter"
 for item in os.listdir(folder):
     print("Working on "+item)
     path = folder+"\\"+item.split(".")[0]

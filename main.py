@@ -20,9 +20,9 @@ def GetAccessToken():
 
 exitFlag = 0
 studentInfo = Maria()
-term = "Fall"
+term = "Winter"
 year = 2020
-search_key = "2020 Fall"
+search_key = "Winter 2020"
 token = GetAccessToken()
 url = "https://sign.zoho.com/api/v1/requests"
 headers = {

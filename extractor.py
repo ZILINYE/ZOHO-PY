@@ -1,19 +1,22 @@
 import os
 import zipfile
-from PyPDF2 import PdfMerger
+from PyPDF3 import PdfFileMerger
 import shutil
 
-folder = "2020 Winter"
+folder = "2023 Winter"
 for item in os.listdir(folder):
-    print("Working on "+item)
-    path = folder+"\\"+item.split(".")[0]
-    with zipfile.ZipFile(folder+"\\"+str(item), 'r') as zip_ref:
-   
+    print("Working on " + item)
+    path = folder + "\\" + item.split(".")[0]
+    with zipfile.ZipFile(folder + "\\" + str(item), "r") as zip_ref:
+
         zip_ref.extractall(path)
-    merger = PdfMerger()
+
+    merger = PdfFileMerger()
+    # print("here")
     for it in os.listdir(path):
-        merger.append(path+"\\"+it)
-    merger.write(path+".pdf")
+        print("Merging file ", it)
+        merger.append(path + "\\" + it)
+    merger.write(path + ".pdf")
     merger.close()
-    os.remove(path+'.zip')
+    os.remove(path + ".zip")
     shutil.rmtree(path)

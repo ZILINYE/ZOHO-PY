@@ -7,7 +7,7 @@ from queue import Queue
 import math
 import zipfile
 import os
-from PyPDF2 import PdfMerger
+from PyPDF3 import PdfMerger
 import shutil
 import pandas as pd
 
@@ -75,11 +75,6 @@ def getDocumentList(start_index) -> list:
         if item["request_status"] == "completed":
 
             campemail = item["actions"][0]["recipient_email"]
-
-            # fileprefix = item['document_ids'][0]['document_name'][:9]
-            # term = "Spring"
-            # year = 2022
-
             request_id = item["request_id"]
 
             studentID, program = getStudentInfo(year, term, campemail)
@@ -144,7 +139,6 @@ def pdfProcess(q):
         #  Delete old zip file and folder
         os.remove(filename + ".zip")
         shutil.rmtree(filename)
-        # queueLock.release()
 
 
 def main():
@@ -159,27 +153,11 @@ def main():
     while i <= thread_number:
 
         pageList = getDocumentList(start_index)
-        # df = pd.DataFrame(pageList)
-        # df.to_csv('test.csv',mode='a',index=False,header=False)
-        # print(df)
         for item in pageList:
             dlist.append(item)
         start_index += 10
         i += 1
-    # for item in dlist:
-    #     getDownloadPDF(item)
 
-    # while not ExtractList.empty():
-    #     pdfProcess(ExtractList)
-    # while thread_index <= thread_number:
-    #     thread = myThread(thread_index, ExtractList)
-    #     thread.start()
-    #     threads.append(thread)
-    #     thread_index += 1
-
-    # exitFlag = 1
-    # for t in threads:
-    #     t.join()
     print("exit the thread!!")
 
 

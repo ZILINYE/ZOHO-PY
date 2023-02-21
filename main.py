@@ -7,14 +7,13 @@ from queue import Queue
 import math
 import zipfile
 import os
-from PyPDF3 import PdfMerger
 import shutil
 import pandas as pd
 
 
 def GetAccessToken():
     r = requests.post(
-        url="https://accounts.zoho.com/oauth/v2/token?refresh_token=1000.23be290456580cd7378b94f2eb3d2334.8ed115d741371a6cf5ada13b2903819e&client_id=1000.6C4D4C3LQS1XV9BVF70PS55G3PELTK&client_secret=211e6b7d3395fd9e8f7d67df464a884e0f573c6079&redirect_uri=https%3A%2F%2Fsign.zoho.com&grant_type=refresh_token"
+        url="https://accounts.zoho.com/oauth/v2/token?refresh_token=<Token>&client_id=<Client ID>&client_secret=<Client Secret>&redirect_uri=https%3A%2F%2Fsign.zoho.com&grant_type=refresh_token"
     )
     access_token = r.json()["access_token"]
     return access_token

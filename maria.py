@@ -9,8 +9,9 @@ class Maria:
     def __init__(self):
         try:
             sqlEngine = create_engine(
-                "mysql+pymysql://it:Acumen321@192.168.5.238/Ace", pool_recycle=3600
+                "", pool_recycle=3600
             )
+            # Database Connection mysql+pymysql://<Username>:<password>@<Ip Address>/<Databse Name>
             self.mydb = mysql.connector.connect(
                 host="192.168.5.238", user="it", password="Acumen321", database="Ace"
             )

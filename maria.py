@@ -13,7 +13,7 @@ class Maria:
             )
             # Database Connection mysql+pymysql://<Username>:<password>@<Ip Address>/<Databse Name>
             self.mydb = mysql.connector.connect(
-                host="192.168.5.238", user="it", password="Acumen321", database="Ace"
+                host="<DB Ip address>", user="<DB username>", password="<DB Password>", database="<DB Name>"
             )
 
         except Exception as e:
